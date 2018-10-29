@@ -1,0 +1,258 @@
+version: "3.6"
+
+services:
+  traefik:
+    hostname: traefik
+    image: traefik:latest
+    container_name: traefik
+    restart: always
+    domainname: ${DOMAINNAME}
+    networks:
+      - default
+      - traefik_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    # environment:
+      # - NAMECHEAP_API_USER=${NAMECHEAP_API_USER}
+      # - NAMECHEAP_API_KEY=${NAMECHEAP_API_KEY}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=traefik"
+      - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}"
+      - "traefik.port=8080"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.frontend.auth.basic.removeHeader=true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik
+      - ./shared:/shared
+
+  nzbget:
+    image: "linuxserver/nzbget"
+    container_name: "nzbget"
+    volumes:
+      - ./sabnzbd:/config
+      - ~/Downloads:/downloads
+      - ~/Downloads/incomplete:/incomplete-downloads
+      - ./shared:/shared
+    restart: always
+    environment:
+      - TZ=${TZ}
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=nzbget"
+      - "traefik.frontend.rule=Host:nzbget.${DOMAINNAME}"
+      - "traefik.port=6789"
+      - "traefik.docker.network=traefik_proxy"
+      # - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.frontend.auth.basic.removeHeader=true"
+
+  radarr:
+    image: "linuxserver/radarr"
+    container_name: "radarr"
+    volumes:
+      - ./radarr:/config
+      - ~/Downloads/completed:/downloads
+      - /Volumes/Braniac/Movies:/Braniac/Movies
+      - /Volumes/Metallo/Movies:/Metallo/Movies
+      # - "/private/etc/localtime:/etc/localtime:ro"
+      - ./shared:/shared
+    restart: always
+    environment:
+      - TZ=${TZ}
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=radarr"
+      - "traefik.frontend.rule=Host:radarr.${DOMAINNAME}"
+      - "traefik.port=7878"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.frontend.auth.basic.removeHeader=true"
+
+  sonarr:
+    image: "linuxserver/sonarr"
+    container_name: "sonarr"
+    volumes:
+      - ./sonarr:/config
+      - ~/Downloads/completed:/downloads
+      - /Volumes/Braniac/TV\ Shows:/Braniac/TV\ Shows
+      - /Volumes/Metallo/TV\ Shows:/Metallo/TV\ Shows
+      # - "/private/etc/localtime:/etc/localtime:ro"
+      - ./shared:/shared
+    restart: always
+    environment:
+      - TZ=${TZ}
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=sonarr"
+      - "traefik.frontend.rule=Host:sonarr.${DOMAINNAME}"
+      - "traefik.port=8989"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+
+  organizr:
+    container_name: organizr
+    restart: always
+    image: lsiocommunity/organizr
+    volumes:
+      - ./organizr:/config
+      - ./shared:/shared
+    environment:
+      - TZ=${TZ}
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=organizr"
+      - "traefik.frontend.rule=Host:organizr.${DOMAINNAME}"
+      - "traefik.port=80"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.frontend.auth.basic.removeHeader=true"
+
+  ombi:
+    container_name: ombi
+    restart: always
+    image: linuxserver/ombi
+    volumes:
+      - ./ombi:/config
+      - ./shared:/shared
+    environment:
+      - TZ=${TZ}
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=ombi"
+      - "traefik.frontend.rule=Host:ombi.${DOMAINNAME}"
+      - "traefik.port=3579"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+
+  tautulli:
+    container_name: tautulli
+    restart: always
+    image: linuxserver/tautulli
+    volumes:
+      - ./tautulli/config:/config
+      - ./tautulli/logs:/logs:ro
+      - ./shared:/shared
+    environment:
+      - TZ=${TZ}
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=tautulli"
+      - "traefik.frontend.rule=Host:tautulli.${DOMAINNAME}"
+      - "traefik.port=8181"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.frontend.auth.basic.removeHeader=true"
+
+  hydra:
+    image: "linuxserver/hydra"
+    container_name: "hydra"
+    volumes:
+      - ./hydra:/config
+      - ~/Downloads:/downloads
+      - ./shared:/shared
+    restart: always
+    environment:
+      - TZ=${TZ}
+    networks:
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=hydra"
+      - "traefik.frontend.rule=Host:hydra.${DOMAINNAME}"
+      - "traefik.port=5075"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=example.com"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.frontend.auth.basic.removeHeader=true"
+
+networks:
+  traefik_proxy:
+    external:
+      name: traefik_proxy
+  default:
+    driver: bridge

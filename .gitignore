@@ -1,0 +1,11 @@
+.env
+traefik.toml
+hydra
+ombi
+organizr
+radarr
+sabnzbd
+sonarr
+tautulli
+acme.json
+.htpasswd
