@@ -109,8 +109,8 @@ services:
     volumes:
       - ./sonarr:/config
       - ~/Downloads/completed:/downloads
-      - /Volumes/Braniac/TV\ Shows:/Braniac/TV\ Shows
-      - /Volumes/Metallo/TV\ Shows:/Metallo/TV\ Shows
+      - /Volumes/Braniac/TV Shows:/Braniac/TV Shows
+      - /Volumes/Metallo/TV Shows:/Metallo/TV Shows
       # - "/private/etc/localtime:/etc/localtime:ro"
       - ./shared:/shared
     restart: always
