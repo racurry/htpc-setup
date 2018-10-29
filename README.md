@@ -1,22 +1,24 @@
 # HTPC Set up
 
-A full HTPC home server running on a Mac Mini.
+My complete set up for my home media server running on my Mac Mini.  All apps end up with custom subdomains like `app.domain.com` thanks to Traefik.
+
+## Prerequisites
+1. Docker
 
 ## Configure domain name
 1. Register a domain name at namecheap.com
 2. Set up host records
-  a. Enable dynamic DNS.  Using your IP address, add
-  a. A+ Dynamic DNS record -  @ - {IP address} - Automatic
-  a. A+ Dynamic DNS record -  * - {IP address} - Automatic
+   1. Enable dynamic DNS.  Using your IP address, add
+   2. A+ Dynamic DNS record -  @ - {IP address} - Automatic
+   3. A+ Dynamic DNS record -  * - {IP address} - Automatic
+3. Request API access - this takes a few business days.
 
 ## Keep domain pointed to your server
-2. Install [dDNS broker](https://ddnsbroker.com)
+1. Install [dDNS broker](https://ddnsbroker.com)
+2. Add entries for root (@) and wildcard subdomains (*)
 
-## Port forwarding on your router
-Open up 80, 443
-
-## Get everything installed
-Follow [this guide](https://www.smarthomebeginner.com/traefik-reverse-proxy-tutorial-for-docker/)
+## Configure port forwarding on your router
+1. Point ports 80 and 443 to your Mac Mini in your router
 
 ## Prep
 Run `./setup`
@@ -24,3 +26,11 @@ Run `./setup`
 Fill out the .env file
 
 Fill out email address, domain name in traefik/traefik.toml
+
+Run `docker-compose up -d`
+
+## Not covered
+Plex is run separately.
+
+## Credits
+I mostly put this together by following [this guide](https://www.smarthomebeginner.com/traefik-reverse-proxy-tutorial-for-docker/)
