@@ -39,7 +39,7 @@ services:
     container_name: nzbget
     hostname: nzbget
     ports:
-      - "6789:6789"
+      - "6788:6788"
     volumes:
       - ${CONFIG}/nzbget:/config
       - ${DOWNLOAD}/complete:/downloads
@@ -49,7 +49,7 @@ services:
       - TZ
     labels:
       traefik.enable: "true"
-      traefik.port: "6789"
+      traefik.port: "6788"
       traefik.frontend.rule: "Host:nzbget.${DOMAINNAME}"
       traefik.frontend.auth.basic.usersFile: shared/.htpasswd
       com.centurylinklabs.watchtower.enable: "true"
@@ -60,7 +60,7 @@ services:
     container_name: sonarr
     hostname: sonarr
     ports:
-      - "8989:8989"
+      - "8988:8988"
     volumes:
       - ${CONFIG}/sonarr:/config
       - ${DOWNLOAD}/complete:/downloads
@@ -70,7 +70,7 @@ services:
       - TZ
     labels:
       traefik.enable: "true"
-      traefik.port: "8989"
+      traefik.port: "8988"
       traefik.frontend.rule: "Host:sonarr.${DOMAINNAME}"
       traefik.frontend.auth.basic.usersFile: shared/.htpasswd
       com.centurylinklabs.watchtower.enable: "true"
@@ -81,7 +81,7 @@ services:
     container_name: radarr
     hostname: radarr
     ports:
-      - "7878:7878"
+      - "7879:7879"
     volumes:
       - ${CONFIG}/radarr:/config
       - ${DOWNLOAD}/complete:/downloads
@@ -91,7 +91,7 @@ services:
       - TZ
     labels:
       traefik.enable: "true"
-      traefik.port: "7878"
+      traefik.port: "7879"
       traefik.frontend.rule: "Host:radarr.${DOMAINNAME}"
       traefik.frontend.auth.basic.usersFile: shared/.htpasswd
       com.centurylinklabs.watchtower.enable: "true"
