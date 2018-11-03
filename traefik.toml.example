@@ -27,7 +27,7 @@ defaultEntryPoints = ["https", "http"]
 
 # Let's encrypt configuration
 [acme]
-email = "email@domain.com" #any email id will work
+email = "YOU@EXAMPLE.COM" #any email id will work
 storage="/etc/traefik/acme/acme.json"
 entryPoint = "https"
 acmeLogging=true

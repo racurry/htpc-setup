@@ -33,4 +33,4 @@ Run `docker-compose up -d`
 Plex is run separately.
 
 ## Credits
-I mostly put this together by following [this guide](https://www.smarthomebeginner.com/traefik-reverse-proxy-tutorial-for-docker/)
+I mostly put this together by following [this guide](https://www.smarthomebeginner.com/traefik-reverse-proxy-tutorial-for-docker/) and this [one](https://github.com/duhio/docker-compose-usenet).

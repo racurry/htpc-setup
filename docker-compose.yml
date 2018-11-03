@@ -1,258 +1,260 @@
-version: "3.6"
+---
+version: '3'
 
 services:
+
   traefik:
-    hostname: traefik
     image: traefik:latest
+    command: --web --docker --docker.watch --docker.domain=${DOMAINNAME} \
+             --docker.exposedbydefault=false --acme.domains=${DOMAINNAME}
     container_name: traefik
-    restart: always
-    domainname: ${DOMAINNAME}
-    networks:
-      - default
-      - traefik_proxy
+    hostname: traefik
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"
-    # environment:
-      # - NAMECHEAP_API_USER=${NAMECHEAP_API_USER}
-      # - NAMECHEAP_API_KEY=${NAMECHEAP_API_KEY}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=traefik"
-      - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}"
-      - "traefik.port=8080"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
-      - "traefik.frontend.auth.basic.removeHeader=true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik:/etc/traefik
-      - ./shared:/shared
+      - ${CONFIG}/traefik:/etc/traefik
+      - ${CONFIG}/shared:/shared
+    labels:
+      traefik.enable: "true"
+      traefik.frontend.rule: "Host:monitor.${DOMAINNAME}"
+      traefik.port: "8080"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  watchtower:
+    image: v2tec/watchtower:latest
+    command: --cleanup --label-enable --schedule="0 2 * * *"
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
 
   nzbget:
-    image: "linuxserver/nzbget"
-    container_name: "nzbget"
+    image: linuxserver/nzbget:latest
+    container_name: nzbget
+    hostname: nzbget
+    ports:
+      - "6789:6789"
     volumes:
-      - ./sabnzbd:/config
-      - ~/Downloads:/downloads
-      - ~/Downloads/incomplete:/incomplete-downloads
-      - ./shared:/shared
-    restart: always
+      - ${CONFIG}/nzbget:/config
+      - ${DOWNLOAD}/complete:/downloads
+      - ${DOWNLOAD}/incomplete:/incomplete-downloads
+      - ${DOWNLOAD}/watch:/watch
     environment:
-      - TZ=${TZ}
-    networks:
-      - traefik_proxy
+      - TZ
     labels:
-      - "traefik.enable=true"
-      - "traefik.backend=nzbget"
-      - "traefik.frontend.rule=Host:nzbget.${DOMAINNAME}"
-      - "traefik.port=6789"
-      - "traefik.docker.network=traefik_proxy"
-      # - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
-      - "traefik.frontend.auth.basic.removeHeader=true"
-
-  radarr:
-    image: "linuxserver/radarr"
-    container_name: "radarr"
-    volumes:
-      - ./radarr:/config
-      - ~/Downloads/completed:/downloads
-      - /Volumes/Braniac/Movies:/Braniac/Movies
-      - /Volumes/Metallo/Movies:/Metallo/Movies
-      # - "/private/etc/localtime:/etc/localtime:ro"
-      - ./shared:/shared
-    restart: always
-    environment:
-      - TZ=${TZ}
-    networks:
-      - traefik_proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=radarr"
-      - "traefik.frontend.rule=Host:radarr.${DOMAINNAME}"
-      - "traefik.port=7878"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
-      - "traefik.frontend.auth.basic.removeHeader=true"
+      traefik.enable: "true"
+      traefik.port: "6789"
+      traefik.frontend.rule: "Host:nzbget.${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
 
   sonarr:
-    image: "linuxserver/sonarr"
-    container_name: "sonarr"
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    hostname: sonarr
+    ports:
+      - "8989:8989"
     volumes:
-      - ./sonarr:/config
-      - ~/Downloads/completed:/downloads
-      - /Volumes/Braniac/TV Shows:/Braniac/TV Shows
-      - /Volumes/Metallo/TV Shows:/Metallo/TV Shows
-      # - "/private/etc/localtime:/etc/localtime:ro"
-      - ./shared:/shared
-    restart: always
+      - ${CONFIG}/sonarr:/config
+      - ${DOWNLOAD}/complete:/downloads
+      - ${DATA_DIR}/TV Shows
+      - ${DATA_DIR_2}/TV Shows
     environment:
-      - TZ=${TZ}
-    networks:
-      - traefik_proxy
+      - TZ
     labels:
-      - "traefik.enable=true"
-      - "traefik.backend=sonarr"
-      - "traefik.frontend.rule=Host:sonarr.${DOMAINNAME}"
-      - "traefik.port=8989"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
+      traefik.enable: "true"
+      traefik.port: "8989"
+      traefik.frontend.rule: "Host:sonarr.${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
 
-  organizr:
-    container_name: organizr
-    restart: always
-    image: lsiocommunity/organizr
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    hostname: radarr
+    ports:
+      - "7878:7878"
     volumes:
-      - ./organizr:/config
-      - ./shared:/shared
+      - ${CONFIG}/radarr:/config
+      - ${DOWNLOAD}/complete:/downloads
+      - ${DATA_DIR}/Movies
+      - ${DATA_DIR_2}/Movies
     environment:
-      - TZ=${TZ}
-    networks:
-      - traefik_proxy
+      - TZ
     labels:
-      - "traefik.enable=true"
-      - "traefik.backend=organizr"
-      - "traefik.frontend.rule=Host:organizr.${DOMAINNAME}"
-      - "traefik.port=80"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
-      - "traefik.frontend.auth.basic.removeHeader=true"
+      traefik.enable: "true"
+      traefik.port: "7878"
+      traefik.frontend.rule: "Host:radarr.${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
 
-  ombi:
-    container_name: ombi
-    restart: always
-    image: linuxserver/ombi
+  lidarr:
+    image: linuxserver/lidarr:latest
+    container_name: lidarr
+    hostname: lidarr
+    ports:
+      - "8686:8686"
     volumes:
-      - ./ombi:/config
-      - ./shared:/shared
-    environment:
-      - TZ=${TZ}
-    networks:
-      - traefik_proxy
+      - ${CONFIG}/lidarr:/config
+      # - /etc/localtime:/etc/localtime:ro
+      - ${DOWNLOAD}/complete:/downloads
+      - ${DATA_DIR}/Music
+      - ${DATA_DIR_2}/Music
     labels:
-      - "traefik.enable=true"
-      - "traefik.backend=ombi"
-      - "traefik.frontend.rule=Host:ombi.${DOMAINNAME}"
-      - "traefik.port=3579"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
+      traefik.enable: "true"
+      traefik.port: "8686"
+      traefik.frontend.rule: "Host:lidarr.${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  lazylibrarian:
+    image: linuxserver/lazylibrarian:latest
+    container_name: lazylibrarian
+    hostname: lazylibrarian
+    ports:
+      - "5299:5299"
+    volumes:
+      - ${CONFIG}/lazylibrarian:/config
+      - ${DOWNLOAD}/complete:/downloads
+      - ${DATA_DIR}/Books
+      - ${DATA_DIR_2}/Books
+    environment:
+      - TZ
+    labels:
+      traefik.enable: "true"
+      traefik.port: "5299"
+      traefik.frontend.rule: "Host:lazylibrarian.${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  mylar:
+    image: linuxserver/mylar:latest
+    container_name: mylar
+    hostname: mylar
+    ports:
+      - "8090:8090"
+    volumes:
+      - ${CONFIG}/mylar:/config
+      - ${DOWNLOAD}/complete:/downloads
+      - ${DATA_DIR}/Comics
+      - ${DATA_DIR_2}/Comics
+    environment:
+      - TZ
+    labels:
+      traefik.enable: "true"
+      traefik.port: "8090"
+      traefik.frontend.rule: "Host:mylar.${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  nzbhydra:
+    image: linuxserver/hydra2:latest
+    container_name: nzbhydra
+    hostname: nzbhydra
+    ports:
+      - "5076:5076"
+    volumes:
+      - ${CONFIG}/nzbhydra2:/config
+      - ${DOWNLOAD}/complete:/downloads
+    environment:
+      - TZ
+    labels:
+      traefik.enable: "true"
+      traefik.port: "5076"
+      traefik.frontend.rule: "Host:nzbhydra.${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  # plex:
+  #   image: linuxserver/plex
+  #   container_name: plex
+  #   hostname: plex
+  #   ports:
+  #     - "32400:32400"
+  #     - "32400:32400/udp"
+  #     - "32469:32469"
+  #     - "32469:32469/udp"
+  #     - "1900:1900/udp"
+  #   volumes:
+  #     - ${CONFIG}/plex:/config
+  #     - ${DATA}/tv:/media/tv
+  #     - ${DATA}/movies:/media/movies
+  #     - ${DATA}/music:/media/music
+  #     - ${DATA}/anime:/media/anime
+  #   environment:
+  #     - PGID
+  #     - PUID
+  #     - TZ
+  #     - VERSION=latest
+  #   labels:
+  #     traefik.enable: "true"
+  #     traefik.port: "32400"
+  #     traefik.frontend.rule: "Host:plex.${DOMAINNAME}"
+  #     com.centurylinklabs.watchtower.enable: "true"
+  #   restart: unless-stopped
 
   tautulli:
+    image: linuxserver/tautulli:latest
     container_name: tautulli
-    restart: always
-    image: linuxserver/tautulli
+    hostname: tautulli
+    ports:
+      - "8181:8181"
     volumes:
-      - ./tautulli/config:/config
-      - ./tautulli/logs:/logs:ro
-      - ./shared:/shared
+      - ${CONFIG}/tautulli:/config
+      - ~/Library/Logs/Plex Media Server/:/logs:ro
+      # - ${CONFIG}/plex/Library/Application Support/Plex Media Server/Logs:/logs:ro # get plex running on docker, then use this
     environment:
-      - TZ=${TZ}
-    networks:
-      - traefik_proxy
+      - TZ
     labels:
-      - "traefik.enable=true"
-      - "traefik.backend=tautulli"
-      - "traefik.frontend.rule=Host:tautulli.${DOMAINNAME}"
-      - "traefik.port=8181"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
-      - "traefik.frontend.auth.basic.removeHeader=true"
+      traefik.enable: "true"
+      traefik.port: "8181"
+      traefik.frontend.rule: "Host:tautulli.${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
 
-  hydra:
-    image: "linuxserver/hydra"
-    container_name: "hydra"
+  heimdall:
+    image: duhio/heimdall-https:latest
+    container_name: heimdall
+    hostname: heimdall
     volumes:
-      - ./hydra:/config
-      - ~/Downloads:/downloads
-      - ./shared:/shared
-    restart: always
+      - ${CONFIG}/heimdall:/config
     environment:
-      - TZ=${TZ}
-    networks:
-      - traefik_proxy
+      - TZ
     labels:
-      - "traefik.enable=true"
-      - "traefik.backend=hydra"
-      - "traefik.frontend.rule=Host:hydra.${DOMAINNAME}"
-      - "traefik.port=5075"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=example.com"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
-      - "traefik.frontend.auth.basic.removeHeader=true"
+      traefik.enable: "true"
+      traefik.port: "80"
+      traefik.frontend.rule: "Host:${DOMAINNAME}"
+      traefik.frontend.auth.basic.usersFile: shared/.htpasswd
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
 
-networks:
-  traefik_proxy:
-    external:
-      name: traefik_proxy
-  default:
-    driver: bridge
+  ombi:
+    image: linuxserver/ombi
+    container_name: ombi
+    hostname: ombi
+    ports:
+      - "3579:3579"
+    volumes:
+      - ${CONFIG}/ombi:/config
+    environment:
+      - TZ
+    labels:
+      traefik.enable: "true"
+      traefik.port: "3579"
+      traefik.frontend.rule: "Host:ombi.${DOMAINNAME}"
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
