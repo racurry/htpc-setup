@@ -151,6 +151,8 @@ services:
       - ${DATA_DIR_2}/Comics
     environment:
       - TZ
+      - NAMECHEAP_API_USER
+      - NAMECHEAP_API_KEY
     labels:
       traefik.enable: "true"
       traefik.port: "8090"
