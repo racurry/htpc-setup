@@ -17,10 +17,12 @@ Turn on dynamic DNS at namecheap.com
 2. Update `DOMAIN` to your actual domain.
 3. Set the `HTPASSWD` value.  Use [this generator](http://www.htaccesstools.com/htpasswd-generator/)
 
-### Set up traefic
+### Set up traefik
 1. `mkdir -p config/traefik`
 2. `touch config/traefik/acme.json`
 3. `chmod 600 config/traefik/acme.json`
+4. `cp traefik.toml.example config/traefik/traefik.toml`
+5. Set the correct email address in `config/traefik/traefik.toml`
 
 ### Set up ddconf
 1. `mkdir -p config/ddclient`
