@@ -100,7 +100,7 @@ services:
     volumes:
       - ${CONFIG}/radarr:/config
       - ${DOWNLOAD}/complete:/downloads
-      - ${DATA_DIR}/Movies:/movies
+      - ${DATA_DIR_2}/Movies:/movies
     environment:
       - PGID
       - PUID
