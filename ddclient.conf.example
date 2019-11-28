@@ -1,0 +1,6 @@
+use=web, web=dynamicdns.park-your-domain.com/getip
+protocol=namecheap
+server=dynamicdns.park-your-domain.com
+login=YOUR.DOMAIN
+password=PASSWORD_FROM_NAMECHEAP
+@.YOUR.DOMAIN,*.YOUR.DOMAIN

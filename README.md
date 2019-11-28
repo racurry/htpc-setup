@@ -1,36 +1,38 @@
-# HTPC Set up
+# My HTPC
 
 My complete set up for my home media server running on my Mac Mini.  All apps end up with custom subdomains like `app.domain.com` thanks to Traefik.
 
-## Prerequisites
+## Setup
+
+### Prerequisites
 1. Docker
+2. A domain registered at namecheap.com
+3. Port forwarding on your router, forwarding ports `80` and `443`
 
-## Configure domain name
-1. Register a domain name at namecheap.com
-2. Set up host records
-   1. Enable dynamic DNS.  Using your IP address, add
-   2. A+ Dynamic DNS record -  @ - {IP address} - Automatic
-   3. A+ Dynamic DNS record -  * - {IP address} - Automatic
-3. Request API access - this takes a few business days.
+### Configure domain name
+Turn on dynamic DNS at namecheap.com
 
-## Keep domain pointed to your server
-1. Install [dDNS broker](https://ddnsbroker.com)
-2. Add entries for root (@) and wildcard subdomains (*)
+### Configure the .env
+1. `cp .env.example .env`.
+2. Update `DOMAIN` to your actual domain.
+3. Set the `HTPASSWD` value.  Use [this generator](http://www.htaccesstools.com/htpasswd-generator/)
 
-## Configure port forwarding on your router
-1. Point ports 80 and 443 to your Mac Mini in your router
+### Set up traefic
+1. `mkdir -p config/traefik`
+2. `touch config/traefik/acme.json`
+3. `chmod 600 config/traefik/acme.json`
 
-## Prep
-Run `./setup`
+### Set up ddconf
+1. `mkdir -p config/ddclient`
+2. `cp ddclient.conf.example config/ddclient/ddclient.conf`
+3. Update the domain names and dynamic DNS password in `config/ddclient/ddclient.conf`
 
-Fill out the .env file
-
-Fill out email address, domain name in traefik/traefik.toml
-
+## Running
 Run `docker-compose up -d`
 
-## Not covered
-Plex is run separately.
+You should now be able to get to everything by navigating to `app.your.domian`.
 
 ## Credits
-I mostly put this together by following [this guide](https://www.smarthomebeginner.com/traefik-reverse-proxy-tutorial-for-docker/) and this [one](https://github.com/duhio/docker-compose-usenet).
+This is largely identical to [https://github.com/duhio/docker-compose-usenet)](https://github.com/duhio/docker-compose-usenet)).
+
+I also pulled some tips from [this smarthomebeginner.com guide](https://www.smarthomebeginner.com/traefik-reverse-proxy-tutorial-for-docker/).
